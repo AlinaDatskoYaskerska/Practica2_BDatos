@@ -5,6 +5,7 @@
 #ifndef NCOURSES_SEARCH_H
 #define NCOURSES_SEARCH_H
 #include "windows.h"
+#include "odbc.h"
 #include <string.h>
 /*#include <unistd.h>*/
 void results_search(char * from, char *to, int * n_choices,
