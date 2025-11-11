@@ -52,10 +52,11 @@ static void init_struct(_Windows *windows, __attribute__((unused)) _Panels *pane
     /* labels for forms placed in win_form */
     char *forms_search_choices[] = {
             "From: ",
-            "To:   "
+            "To:   ",
+            "Date: "
     };
     char *forms_bpass_choices[] = {
-            "book Id: "
+            "Book Id: "
     };
 
     /* Menu: copy menu labels to menu structure */
@@ -185,6 +186,9 @@ The leaks you should worry about are the “unreachable” leaks because they in
     for (i = 0; i < windows.rows_out_win; i++)
         free(menus.out_win_choices[i]);
     free(menus.out_win_choices);
+    for (i = 0; i < windows.rows_out_win; i++)
+        free(menus.msg_win_choices[i]);
+    free(menus.msg_win_choices);
 
     /*free panels */
     del_panel(panels.search_panel);

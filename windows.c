@@ -164,16 +164,26 @@ static void create_out(_Windows *windows, _Menus *menu)
                 (char *) calloc(windows->cols_out_win, sizeof(char *));
 }
 
-static void create_msg(_Windows *windows)
+static void create_msg(_Windows *windows, _Menus *menu)
 /** Creates the  message window. This is an output only window.
  * that does  not interact with users.
  */
 {
+    int i = 0;
+
     windows->msg_win =
             create_newwin(windows->height_menu_win + 1,
                           windows->terminal_ncols,
                           windows->terminal_nrows - windows->height_menu_win - 1,
                           0, windows->msg_title);
+                    
+    
+    menu->msg_win_choices =
+            (char **) calloc(windows->rows_out_win, sizeof(char *));
+
+    for (i = 0; i < windows->rows_out_win; i++)
+        (menu->msg_win_choices)[i] =
+                (char *) calloc(windows->cols_out_win, sizeof(char *));
 }
 
 
@@ -269,13 +279,16 @@ void _initsrc(_Windows *windows,
     create_menu(windows, menus);
     create_form(windows, menus, forms, panels);
     create_out(windows, menus);
-    create_msg(windows);
+    create_msg(windows, menus);
 }
 
 
 void print_out(WINDOW *win,
                char **choices,
-               int menuitems,
+               int n_choices,
+               int max_rows,
+               int max_cols, 
+               int start_index, 
                int highlight,
                char *title)
 /** print array of strings choices window win (usually out_win)
@@ -287,21 +300,48 @@ void print_out(WINDOW *win,
  * @param title
  */
 {
-    int x=0, y=0, i=0;
-    x = 2;
-    y = 1;
+    int x = 2, y = 1; 
+    int i = 0;
+    int data_rows = max_rows - 1; 
+    int end_index = 0;
+
     (void) box(win, 0, 0);
-    (void) mvwaddstr(win, 0, 2, title);
-    for (i = 0; i < menuitems; ++i) {
-        if (highlight == i) /* High light the present choice  */
-        {
-            (void) wattron(win, A_REVERSE);  /** set reverse attribute on */
+    (void) mvwaddstr(win, 0, 2, title); 
+
+    if (highlight == 0) { 
+        wattron(win, A_REVERSE);
+        mvwprintw(win, y, x, "%s", choices[0]); 
+        wattroff(win, A_REVERSE);
+
+        start_index = 1;
+    } else {
+        mvwprintw(win, y, x, "%s", choices[0]); 
+        if (start_index == 0) start_index = 1;
+    }
+    y++; 
+
+    end_index = start_index + data_rows;
+    if (end_index > n_choices) {
+        end_index = n_choices;
+    }
+
+    for (i = start_index; i < end_index; i++) {
+        if (highlight == i) { 
+            (void) wattron(win, A_REVERSE);  
+            (void) mvwprintw(win, y, x, "%s", choices[i]); 
+            (void) wattroff(win, A_REVERSE); 
+        } else {
             (void) mvwprintw(win, y, x, "%s", choices[i]);
-            (void) wattroff(win, A_REVERSE); /** set reverse attribute off */
-        } else
-            (void) mvwprintw(win, y, x, "%s", choices[i]);
+        }
         y += 1;
     }
+
+    for (; y <= max_rows; y++) {
+        (void) mvwprintw(win, y, x, "%*s", max_cols, "");  
+    }
+
     (void) wrefresh(win);
 }
+
+
 

@@ -45,6 +45,7 @@ typedef struct _Menus{
     int no_items;
     ITEM **menuitems;
     char **out_win_choices;
+    char **msg_win_choices;
 } _Menus;
 
 typedef struct _Forms{
@@ -70,7 +71,10 @@ void print_menu(WINDOW *menu_win,
                 char * title);
 void print_out(WINDOW *win,
                 char ** choices,
-                int menuitems,
+                int n_choices,
+                int max_rows,
+                int max_cols, 
+                int start_index, 
                 int highlight,
                 char * title);
 

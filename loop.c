@@ -62,10 +62,15 @@ void loop(_Windows *windows, _Menus *menus,
     WINDOW *msg_win= NULL; /* pointer to msg_win */
     char * tmpStr1= NULL; /* used to read values typed in forms */
     char * tmpStr2= NULL; /* used to read values typed in forms */
+    char * tmpStr3= NULL; /* used to read values typed in forms */
     int n_out_choices=0; /* number of printed lines in win_out window */
-    int out_highlight = 0; /* line highlighted in win_out window */
+    int out_highlight = 1; /* line highlighted in win_out window */
     int rows_out_window = 0; /* size of win_out window */
     int i = 0; /* dummy variable for loops */
+    int step = windows->rows_out_win - 2 - 1; /*Número de filas que se pasan por pagina*/
+    int current_page = 0;
+    int max_pages = 0;
+    int out_start_index = 1; /*Indice por el que se empieza a pasar pagina*/
 
     (void) curs_set(1); /* show cursor */
     menu = menus->menu;
@@ -129,9 +134,14 @@ void loop(_Windows *windows, _Menus *menus,
                     (void) form_driver(forms->bpass_form, REQ_END_LINE);
                     (void) wrefresh(windows->form_bpass_win);
                 }  else if (focus == FOCUS_RIGHT){
-                    out_highlight = MAX(out_highlight - 1, 0);
-                    print_out(out_win, menus->out_win_choices, n_out_choices,
-                              out_highlight, windows->out_title);
+                    out_highlight = MAX(out_highlight - 1, 1);
+                    if (out_highlight < out_start_index)
+                        out_start_index = out_highlight;
+                    else if (out_highlight >= out_start_index + step)
+                        out_start_index = out_highlight - step + 1;
+
+                    print_out(out_win, menus->out_win_choices, n_out_choices, windows->rows_out_win-2,
+                        windows->cols_out_win-4, out_start_index, out_highlight, windows->out_title);
                 }
                 break;
             case KEY_DOWN:
@@ -145,9 +155,14 @@ void loop(_Windows *windows, _Menus *menus,
                     (void) form_driver(forms->bpass_form, REQ_END_LINE);
                     (void) wrefresh(windows->form_bpass_win);
                 } else if (focus == FOCUS_RIGHT){
-                    out_highlight = MIN(out_highlight + 1, n_out_choices-1);
-                    print_out(out_win, menus->out_win_choices, n_out_choices,
-                              out_highlight, windows->out_title);
+                    out_highlight = MIN(out_highlight + 1, n_out_choices - 1);
+                    if (out_highlight < out_start_index)
+                        out_start_index = out_highlight;
+                    else if (out_highlight >= out_start_index + step)
+                        out_start_index = out_highlight - step + 1;
+
+                    print_out(out_win, menus->out_win_choices, n_out_choices, windows->rows_out_win-2,
+                        windows->cols_out_win-4, out_start_index, out_highlight, windows->out_title);
                 }
                 break;
             case KEY_STAB: /* tab key */
@@ -186,6 +201,37 @@ void loop(_Windows *windows, _Menus *menus,
                 choice = item_index(auxItem);
                 enterKey = (bool) TRUE; /* mark enter pressed */
                 break;
+            case 'a': 
+                if (focus == FOCUS_RIGHT && n_out_choices > 0) {
+                    current_page = (out_start_index - 1) / step + 1;
+
+                    if (current_page > 1) {
+                        out_start_index = out_start_index - step;
+                        if (out_start_index < 1) out_start_index = 1;
+                            out_highlight = out_start_index;
+                    }
+
+                print_out(out_win, menus->out_win_choices, n_out_choices, 
+                            windows->rows_out_win-2, windows->cols_out_win-4, 
+                            out_start_index, out_highlight, windows->out_title);
+                }
+                break;
+            case 's': 
+                if (focus == FOCUS_RIGHT && n_out_choices > 0) {
+                    max_pages = (n_out_choices - 1 + step - 1) / step; 
+                    current_page = (out_start_index - 1) / step + 1;  
+
+                    if (current_page < max_pages) {
+                        out_start_index = (current_page * step) + 1;   
+                        out_highlight = out_start_index;
+                    }
+
+                print_out(out_win, menus->out_win_choices, n_out_choices, 
+                            windows->rows_out_win-2, windows->cols_out_win-4, 
+                            out_start_index, out_highlight, windows->out_title);
+                }
+                break;
+
             default: /* echo pressed key */
                 auxItem = current_item(menu);
                 if (item_index(auxItem) == SEARCH) {
@@ -204,46 +250,51 @@ void loop(_Windows *windows, _Menus *menus,
             if (choice == QUIT)
                 break; /* quit */
             else if ((choice == SEARCH) && (focus == FOCUS_LEFT)) {
-                out_highlight = 0;
+                out_highlight = 1;
+                out_start_index = 1; 
                 for(i=0; i< rows_out_window ; i++)
                     (menus->out_win_choices)[i][0] = '\0';
                 (void)wclear(out_win);
                 (void)form_driver(forms->search_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->search_form_items)[1], 0);
                 tmpStr2 = field_buffer((forms->search_form_items)[3], 0);
-                results_search(tmpStr1, tmpStr2, &n_out_choices, & (menus->out_win_choices),
-                               windows->cols_out_win-4, windows->rows_out_win-2);
-                print_out(out_win, menus->out_win_choices, n_out_choices,
-                          out_highlight, windows->out_title);
-                if ((bool)DEBUG) {
-                    (void)snprintf(buffer, 128, "arg1=%s, arg2=%s",  tmpStr1, tmpStr2);
-                    write_msg(msg_win, buffer, -1, -1, windows->msg_title);
-                }
-
-            }
-            else if ((choice == SEARCH) && (focus == FOCUS_RIGHT)) {
-                (void)snprintf(buffer, 128, "msg=%s", (menus->out_win_choices)[out_highlight] );
-                write_msg(msg_win,buffer,
-                          -1, -1, windows->msg_title);
-            }
-            else if ((choice == BPASS) && (focus == FOCUS_LEFT)) {
-                out_highlight = 0;
-                for(i=0; i< rows_out_window ; i++)
-                    (menus->out_win_choices)[i][0] = '\0';
-                (void) wclear(out_win);
-                (void) form_driver(forms->bpass_form, REQ_VALIDATION);
-                tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
-                results_bpass(tmpStr1, &n_out_choices, & (menus->out_win_choices),
-                              windows->cols_out_win-4, windows->rows_out_win-2);
-                print_out(out_win, menus->out_win_choices, n_out_choices,
-                          out_highlight, windows->out_title);
-            }
-            else if ((choice == BPASS) && focus == (FOCUS_RIGHT)) {
-                write_msg(msg_win, (menus->out_win_choices)[out_highlight],
-                          -1, -1, windows->msg_title);
+                tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
+                results_search(tmpStr1, tmpStr2, tmpStr3, &n_out_choices, & (menus->out_win_choices),
+                            & (menus->msg_win_choices), windows->cols_out_win-4, windows->rows_out_win-2);
+                out_highlight = MIN(out_highlight, n_out_choices - 1);
+                print_out(out_win, menus->out_win_choices, n_out_choices, windows->rows_out_win-2,
+                            windows->cols_out_win-4, out_start_index, out_highlight, windows->out_title);
+            if ((bool)DEBUG) {
+                write_msg(msg_win, menus->msg_win_choices[0], -1, -1, windows->msg_title);
             }
         }
-        choice = -1;
-        enterKey = (bool) FALSE;
+        else if ((choice == SEARCH) && (focus == FOCUS_RIGHT)) {
+            (void)snprintf(buffer, 128, "%s", (menus->msg_win_choices)[out_highlight] );
+            write_msg(msg_win,buffer, -1, -1, windows->msg_title);
+        }
+        else if ((choice == BPASS) && (focus == FOCUS_LEFT)) {
+            out_highlight = 1;
+            out_start_index = 1; 
+            for(i=0; i< rows_out_window ; i++)
+                (menus->out_win_choices)[i][0] = '\0';
+            (void) wclear(out_win);
+            (void) form_driver(forms->bpass_form, REQ_VALIDATION);
+            tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
+            results_bpass(tmpStr1, &n_out_choices, & (menus->out_win_choices),
+                            & (menus->msg_win_choices), windows->cols_out_win-4, windows->rows_out_win-2);
+            out_highlight = MIN(out_highlight, n_out_choices - 1);
+            print_out(out_win, menus->out_win_choices, n_out_choices, windows->rows_out_win-2,
+                            windows->cols_out_win-4, out_start_index, out_highlight, windows->out_title);
+            if ((bool)DEBUG) {
+                write_msg(msg_win, menus->msg_win_choices[0], -1, -1, windows->msg_title);
+            }
+        }
+        else if ((choice == BPASS) && (focus == FOCUS_RIGHT)) {
+            (void)snprintf(buffer, 128, "%s", (menus->msg_win_choices)[out_highlight] );
+            write_msg(msg_win,buffer, -1, -1, windows->msg_title);
+        }
+    }
+    choice = -1;
+    enterKey = (bool) FALSE;
     }
 }
