@@ -48,6 +48,14 @@ void    results_search(char * from, char *to, char *date,
             primer_code[256], segundo_code[256],
             comprobacion[256]; /* Todos los char necesarios para las queries */
 
+    if (!from || !to || !date || from[0] == '\0' || to[0] == '\0' || date[0] == '\0' || from[0] == ' ' || to[0] == ' ' || date[0] == ' ') {
+        snprintf(query_result_set[0], sizeof(query_result_set[0]), "Debes de escribir algo, hay campos vacíos.");
+        t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
+        strncpy((*choices_msg)[0], query_result_set[0], t);
+        *n_choices = 0;
+        return;
+    }
+
     /* Paso de fecha YYYY/MM/DD a YYYY-MM-DD para que sea compatible con PostgreSql*/
     date[4] = '-';
     date[7] = '-';

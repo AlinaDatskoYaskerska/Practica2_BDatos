@@ -53,6 +53,14 @@ void    results_bpass(/*@unused@*/ char * bookID,
             departure[256], boarding_no[256];
     int boarding_no_int;
 
+    if (!bookID || bookID[0] == '\0' || bookID[0] == ' ') {
+        snprintf(query_result_set[0], sizeof(query_result_set[0]), "El campo está vacío.");
+        t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
+        strncpy((*choices_msg)[0], query_result_set[0], t);
+        *n_choices = 0;
+        return;
+    }
+
     /* CONNECT */
     ret = odbc_connect(&env, &dbc);
     if (!SQL_SUCCEEDED(ret)) {
@@ -102,17 +110,7 @@ void    results_bpass(/*@unused@*/ char * bookID,
     /* Si no hay ningun dato es porque o ya se han añadido o porque nunca faltó la tarjeta de embarque*/
     ret = SQLFetch(stmt_select);
     if (!SQL_SUCCEEDED(ret)) {
-        odbc_extract_error("SQLExecute", stmt_select, SQL_HANDLE_STMT);
-        snprintf(query_result_set[0], sizeof(query_result_set[0]), "Book ref no válido");
-        t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
-        strncpy((*choices_msg)[0], query_result_set[0], t);
-        SQLFreeHandle(SQL_HANDLE_STMT, stmt_select);
-        odbc_disconnect(env, dbc);
-        *n_choices = 0;
-        return;
-    }
-    if (ret == SQL_NO_DATA) {
-        snprintf(query_result_set[0], sizeof(query_result_set[0]), "No hay resultados para los datos seleccionados.");
+        snprintf(query_result_set[0], sizeof(query_result_set[0]), "Book ref no existe o no hay resultados.");
         t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
         strncpy((*choices_msg)[0], query_result_set[0], t);
         SQLFreeHandle(SQL_HANDLE_STMT, stmt_select);
