@@ -263,7 +263,7 @@ void    results_bpass(/*@unused@*/ char * bookID,
 
     /* Reallocamos en caso de que el numero de resultados sea mayor 
        al numero de filas permitidas */
-    if (*n_choices >= max_rows) {
+    if (*n_choices > max_rows) {
         *choices = realloc(*choices, (*n_choices + 1) * sizeof(char *));
         *choices_msg = realloc(*choices_msg, (*n_choices + 1) * sizeof(char *));
 
