@@ -50,6 +50,7 @@ static void init_struct(_Windows *windows, __attribute__((unused)) _Panels *pane
     };
 
     /* labels for forms placed in win_form */
+    /* Agregamos el campo Date */
     char *forms_search_choices[] = {
             "From: ",
             "To:   ",
@@ -186,6 +187,7 @@ The leaks you should worry about are the “unreachable” leaks because they in
     for (i = 0; i < windows.rows_out_win; i++)
         free(menus.out_win_choices[i]);
     free(menus.out_win_choices);
+    /* Liberamos el nuevo campo */
     for (i = 0; i < windows.rows_out_win; i++)
         free(menus.msg_win_choices[i]);
     free(menus.msg_win_choices);

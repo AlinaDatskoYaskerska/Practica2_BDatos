@@ -1,74 +1,66 @@
-# Compilación
 CC = gcc -g
 CFLAGS = -Wall -Wextra -pedantic -ansi
 LDLIBS = -lodbc -lcurses -lpanel -lmenu -lform
 
-# Archivos
 HEADERS = odbc.h bpass.h lmenu.h search.h windows.h loop.h
 EXE = menu
 OBJ = $(EXE).o bpass.o loop.o search.o windows.o odbc.o
 
-# Variables de base de datos
 export PGDATABASE := flight
 export PGUSER := alumnodb
 export PGPASSWORD := alumnodb
 export PGCLIENTENCODING := UTF8
 export PGHOST := localhost
 
+DBNAME =$(PGDATABASE)
 PSQL = psql
 CREATEDB = createdb
 DROPDB = dropdb --if-exists
+PG_DUMP = pg_dump
+PG_RESTORE = pg_restore
 
-# Objetivos
+compile: $(EXE)
 
-all: $(EXE) db-recreate
+all: db-recreate
 
-# Compilar el programa
 $(EXE): $(OBJ)
 	$(CC) -o $(EXE) $(OBJ) $(LDLIBS)
 
-# Compilar archivos .c
 %.o: %.c $(HEADERS)
 	@echo Compiling $<...
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Eliminar base de datos
 dropdb:
 	@echo "Eliminando base de datos $(PGDATABASE)..."
-	@$(DROPDB) $(PGDATABASE) || true
+	@$(DROPDB) $(DBNAME) 
 	@rm -f *.log
 
-# Crear base de datos
 createdb:
-	@echo "Creando base de datos $(PGDATABASE)..."
-	@$(CREATEDB) $(PGDATABASE)
+	@echo "Creando BBDD"
+	@$(CREATEDB) $(DBNAME)
 
-# Poblar base de datos desde flight.sql
 populate:
-	@echo "Poblando base de datos $(PGDATABASE) desde flight.sql..."
-	@cat flight.sql | $(PSQL) $(PGDATABASE)
+	@echo "Poblando BBDD desde flight.sql..."
+	@cat flight.sql | $(PSQL) $(DBNAME)
 
-# Recrear base de datos (borrar, crear, poblar)
 db-recreate: dropdb createdb populate
 
-# Limpiar archivos compilados
 clean:
 	rm -f *.o core $(EXE)
 
-# Ejecutar programa
 run: $(EXE)
 	./$(EXE)
 
-# Ejecutar con valgrind
 valgrind: $(EXE)
-	valgrind --leak-check=full ./$(EXE)
+	valgrind --leak-check=full ./$(EXE) 2> valgrind.log
+	@echo "Salida de Valgrind guardada en valgrind.log"
 
-# Abrir shell de psql
 shell:
-	@echo "Conectando a la base de datos $(PGDATABASE)..."
-	@$(PSQL) $(PGDATABASE)
+	@echo "Conectando a la BBDD"
+	@$(PSQL) $(DBNAME)
 
 .PHONY: all dropdb createdb populate db-recreate clean run valgrind shell
+
 
 
 

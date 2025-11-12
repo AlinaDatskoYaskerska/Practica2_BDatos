@@ -164,6 +164,8 @@ static void create_out(_Windows *windows, _Menus *menu)
                 (char *) calloc(windows->cols_out_win, sizeof(char *));
 }
 
+/* Como hemos agregado el nuevo campo de menu->msg_win_choices
+   tenemos que inicializarlo */
 static void create_msg(_Windows *windows, _Menus *menu)
 /** Creates the  message window. This is an output only window.
  * that does  not interact with users.
@@ -295,24 +297,34 @@ void print_out(WINDOW *win,
  *
  * @param win
  * @param choices list of fields
- * @param menuitems number of fields (maximum number of rows)
+ * @param n_choices cantidad total de datos que se pueden imprimir
+ * @param max_rows numero maximo de filas que se pueden imprimir
+ * @param max_cols numero maximo de ancho de una fila
+ * @param start_index indice por el que se va a empezar a imprimir
  * @param highlight highlight this row (0 -> first row)
  * @param title
+ * 
+ * @author Alina Datsko Yaskerska
  */
 {
     int x = 2, y = 1; 
     int i = 0;
+    /* Numero de filas destinadas a datos */
+    /* Esto es ya que hemos elegido que se muestre siempre la cabecera */
     int data_rows = max_rows - 1; 
+    /* Indice del ultimo dato que se va a imprimir */
     int end_index = 0;
 
     (void) box(win, 0, 0);
     (void) mvwaddstr(win, 0, 2, title); 
 
+    /* Printeamos siempre la cabecera */
     if (highlight == 0) { 
         wattron(win, A_REVERSE);
         mvwprintw(win, y, x, "%s", choices[0]); 
         wattroff(win, A_REVERSE);
 
+        /* Cambiamos el indice de inicio a 1 para no volver a imprimir la cabecera */
         start_index = 1;
     } else {
         mvwprintw(win, y, x, "%s", choices[0]); 
@@ -320,11 +332,15 @@ void print_out(WINDOW *win,
     }
     y++; 
 
+    /* Calculamos el indice final */
     end_index = start_index + data_rows;
+    /* Si es mayor que la cantidad total de datos, se limita */
     if (end_index > n_choices) {
         end_index = n_choices;
     }
 
+    /* Printemos hasta el indice anteriormente calculado */
+    /* Comprobamos si tiene que estar subrayado o no */
     for (i = start_index; i < end_index; i++) {
         if (highlight == i) { 
             (void) wattron(win, A_REVERSE);  
@@ -336,6 +352,8 @@ void print_out(WINDOW *win,
         y += 1;
     }
 
+    /* Si la pagina se queda con filas en blanco, las llenamos de espacios 
+       para que quede un hueco y no se vea el texto de la pagina anterior */
     for (; y <= max_rows; y++) {
         (void) mvwprintw(win, y, x, "%*s", max_cols, "");  
     }

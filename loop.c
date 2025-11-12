@@ -63,14 +63,17 @@ void loop(_Windows *windows, _Menus *menus,
     char * tmpStr1= NULL; /* used to read values typed in forms */
     char * tmpStr2= NULL; /* used to read values typed in forms */
     char * tmpStr3= NULL; /* used to read values typed in forms */
-    int n_out_choices=0; /* number of printed lines in win_out window */
-    int out_highlight = 1; /* line highlighted in win_out window */
+    int n_out_choices=0; /* la cantidad de resultados obtenidos en cada funcion */
+    int out_highlight = 1; /* line highlighted in win_out window
+                              lo inicializamos a 1 porque la primera fila
+                              es el encabezado y no nos interesa subrayarlo */
     int rows_out_window = 0; /* size of win_out window */
     int i = 0; /* dummy variable for loops */
-    int step = windows->rows_out_win - 2 - 1; /*Número de filas que se pasan por pagina*/
-    int current_page = 0;
-    int max_pages = 0;
-    int out_start_index = 1; /*Indice por el que se empieza a pasar pagina*/
+    int step = windows->rows_out_win - 2 - 1; /* Número de filas que se pasan por pagina 
+                                                 es -1 ya que no contamos el titulo */
+    int current_page = 0; /* Pagina actual en la que nos encontramos */
+    int max_pages = 0; /* Numero maximo de paginas segun el resultado de la consulta */
+    int out_start_index = 1; /* Primer elemento visible */
 
     (void) curs_set(1); /* show cursor */
     menu = menus->menu;
@@ -134,12 +137,16 @@ void loop(_Windows *windows, _Menus *menus,
                     (void) form_driver(forms->bpass_form, REQ_END_LINE);
                     (void) wrefresh(windows->form_bpass_win);
                 }  else if (focus == FOCUS_RIGHT){
+                    /* Mueve la seleccion una posicion hacia arriba (o hacia el principio de la lista si ya esta al inicio) */
                     out_highlight = MAX(out_highlight - 1, 1);
+                    /* Si el elemento subrayado esta por arriba del rango visible,
+                       desplaza la ventana hacia arriba para que se pueda ver */
                     if (out_highlight < out_start_index)
                         out_start_index = out_highlight;
                     else if (out_highlight >= out_start_index + step)
                         out_start_index = out_highlight - step + 1;
 
+                    /* Printea todo en los rangos calculados */
                     print_out(out_win, menus->out_win_choices, n_out_choices, windows->rows_out_win-2,
                         windows->cols_out_win-4, out_start_index, out_highlight, windows->out_title);
                 }
@@ -155,6 +162,7 @@ void loop(_Windows *windows, _Menus *menus,
                     (void) form_driver(forms->bpass_form, REQ_END_LINE);
                     (void) wrefresh(windows->form_bpass_win);
                 } else if (focus == FOCUS_RIGHT){
+                    /* Analogo a lo anterior pero ahora para abajo */
                     out_highlight = MIN(out_highlight + 1, n_out_choices - 1);
                     if (out_highlight < out_start_index)
                         out_start_index = out_highlight;
@@ -201,16 +209,27 @@ void loop(_Windows *windows, _Menus *menus,
                 choice = item_index(auxItem);
                 enterKey = (bool) TRUE; /* mark enter pressed */
                 break;
+            /* */
             case 'a': 
                 if (focus == FOCUS_RIGHT && n_out_choices > 0) {
-                    current_page = (out_start_index - 1) / step + 1;
+                    /* Pagina actual */
+                    current_page = (out_highlight - 1) / step + 1;
 
+                    /* Si estamos en una pagina que no es la primera, 
+                       movemos el indice principal una pagina para atras */
                     if (current_page > 1) {
                         out_start_index = out_start_index - step;
+                        /* Si nos hemos pasado corrige y resalta el primer elemento */
                         if (out_start_index < 1) out_start_index = 1;
                             out_highlight = out_start_index;
                     }
-
+                    /* Si estamos en la primera pagina, movemos el subrayado al 
+                       primer dato de la tabla */
+                    else {
+                        out_start_index = 1;
+                        out_highlight = 1;
+                    }
+                /* Imprimimos segun los nuevos indices calculados */
                 print_out(out_win, menus->out_win_choices, n_out_choices, 
                             windows->rows_out_win-2, windows->cols_out_win-4, 
                             out_start_index, out_highlight, windows->out_title);
@@ -218,20 +237,30 @@ void loop(_Windows *windows, _Menus *menus,
                 break;
             case 's': 
                 if (focus == FOCUS_RIGHT && n_out_choices > 0) {
+                    /* Calculamos el numero de paginas redondeando hacia arriba */
                     max_pages = (n_out_choices - 1 + step - 1) / step; 
-                    current_page = (out_start_index - 1) / step + 1;  
+                    /* Calculamos la pagina actual */
+                    current_page = (out_highlight - 1) / step + 1;  
 
+                    /* Si current_page se ha pasado, corregimos y si no
+                       ponemos el subrayador sobre el primer elemento 
+                       tras movernos una pagina entera */
                     if (current_page < max_pages) {
                         out_start_index = (current_page * step) + 1;   
                         out_highlight = out_start_index;
                     }
-
+                    /* Si estamos en la ultima pagina, si queremos ir a la siguiente
+                       nos lleva al primer indice de la ultima pagina */
+                    if (current_page == max_pages) {
+                        out_start_index = ((max_pages - 1) * step) + 1;
+                        out_highlight = out_start_index;
+                    }
+                /* Imprimimos segun los nuevos indices calculados */
                 print_out(out_win, menus->out_win_choices, n_out_choices, 
                             windows->rows_out_win-2, windows->cols_out_win-4, 
                             out_start_index, out_highlight, windows->out_title);
                 }
                 break;
-
             default: /* echo pressed key */
                 auxItem = current_item(menu);
                 if (item_index(auxItem) == SEARCH) {
@@ -258,20 +287,27 @@ void loop(_Windows *windows, _Menus *menus,
                 (void)form_driver(forms->search_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->search_form_items)[1], 0);
                 tmpStr2 = field_buffer((forms->search_form_items)[3], 0);
+                /* Añadimos el tercer campo para la fecha */
                 tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
+                /* Llamos a la funcion para conseguir los datos de choices y choices_msg */
                 results_search(tmpStr1, tmpStr2, tmpStr3, &n_out_choices, & (menus->out_win_choices),
                             & (menus->msg_win_choices), windows->cols_out_win-4, windows->rows_out_win-2);
+                /* El elemento subrayado se escoge de tal modo que no supere n_out_choices - 1 */
                 out_highlight = MIN(out_highlight, n_out_choices - 1);
+                /* Imprimimos todo */
                 print_out(out_win, menus->out_win_choices, n_out_choices, windows->rows_out_win-2,
                             windows->cols_out_win-4, out_start_index, out_highlight, windows->out_title);
+            /* Si hay algun error usamos msg_win_choices */
             if ((bool)DEBUG) {
                 write_msg(msg_win, menus->msg_win_choices[0], -1, -1, windows->msg_title);
             }
         }
+        /* Si estamos en el modo de Enter, imprimimos los datos que estan vinculados al elemento subrayado */
         else if ((choice == SEARCH) && (focus == FOCUS_RIGHT)) {
             (void)snprintf(buffer, 128, "%s", (menus->msg_win_choices)[out_highlight] );
             write_msg(msg_win,buffer, -1, -1, windows->msg_title);
         }
+        /* Analogo a Search */
         else if ((choice == BPASS) && (focus == FOCUS_LEFT)) {
             out_highlight = 1;
             out_start_index = 1; 
