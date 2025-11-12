@@ -281,8 +281,10 @@ void loop(_Windows *windows, _Menus *menus,
             else if ((choice == SEARCH) && (focus == FOCUS_LEFT)) {
                 out_highlight = 1;
                 out_start_index = 1; 
-                for(i=0; i< rows_out_window ; i++)
+                for(i=0; i< rows_out_window ; i++) {
                     (menus->out_win_choices)[i][0] = '\0';
+                    (menus->msg_win_choices)[i][0] = '\0';
+                }
                 (void)wclear(out_win);
                 (void)form_driver(forms->search_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->search_form_items)[1], 0);
@@ -311,8 +313,10 @@ void loop(_Windows *windows, _Menus *menus,
         else if ((choice == BPASS) && (focus == FOCUS_LEFT)) {
             out_highlight = 1;
             out_start_index = 1; 
-            for(i=0; i< rows_out_window ; i++)
+            for(i=0; i< rows_out_window ; i++) {
                 (menus->out_win_choices)[i][0] = '\0';
+                (menus->msg_win_choices)[i][0] = '\0';
+            }
             (void) wclear(out_win);
             (void) form_driver(forms->bpass_form, REQ_VALIDATION);
             tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);

@@ -315,6 +315,10 @@ void print_out(WINDOW *win,
     /* Indice del ultimo dato que se va a imprimir */
     int end_index = 0;
 
+    /* Vemos que el subrayador no se haya pasado */
+    if (highlight >= n_choices) highlight = n_choices - 1;
+    if (highlight < 0) highlight = 0;
+
     (void) box(win, 0, 0);
     (void) mvwaddstr(win, 0, 2, title); 
 
