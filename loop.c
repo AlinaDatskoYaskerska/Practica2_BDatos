@@ -235,6 +235,7 @@ void loop(_Windows *windows, _Menus *menus,
                             out_start_index, out_highlight, windows->out_title);
                 }
                 break;
+            /** @Author Alina Datsko Yaskerska */
             case 's': 
                 if (focus == FOCUS_RIGHT && n_out_choices > 0) {
                     /* Calculamos el numero de paginas redondeando hacia arriba */
