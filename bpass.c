@@ -35,6 +35,8 @@ void    results_bpass(/*@unused@*/ char * bookID,
 * @param choices_msg aqui guardamos la informacion que se imprimira en Msg
 * @param max_length output win maximum width
 * @param max_rows output win maximum number of rows
+*
+* @author Alina Datsko Yaskerska
 */
 
 {
