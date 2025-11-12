@@ -294,7 +294,7 @@ void loop(_Windows *windows, _Menus *menus,
                 tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
                 /* Llamos a la funcion para conseguir los datos de choices y choices_msg */
                 results_search(tmpStr1, tmpStr2, tmpStr3, &n_out_choices, & (menus->out_win_choices),
-                            & (menus->msg_win_choices), windows->cols_out_win-4, windows->rows_out_win-2);
+                            & (menus->msg_win_choices), windows->cols_out_win-4);
                 /* El elemento subrayado se escoge de tal modo que no supere n_out_choices - 1 */
                 out_highlight = MIN(out_highlight, n_out_choices - 1);
                 /* Imprimimos todo */
@@ -322,7 +322,7 @@ void loop(_Windows *windows, _Menus *menus,
             (void) form_driver(forms->bpass_form, REQ_VALIDATION);
             tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
             results_bpass(tmpStr1, &n_out_choices, & (menus->out_win_choices),
-                            & (menus->msg_win_choices), windows->cols_out_win-4, windows->rows_out_win-2);
+                            & (menus->msg_win_choices), windows->cols_out_win-4);
             out_highlight = MIN(out_highlight, n_out_choices - 1);
             print_out(out_win, menus->out_win_choices, n_out_choices, windows->rows_out_win-2,
                             windows->cols_out_win-4, out_start_index, out_highlight, windows->out_title);

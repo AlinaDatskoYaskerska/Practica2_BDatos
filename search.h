@@ -9,7 +9,7 @@
 #include <string.h>
 /*#include <unistd.h>*/
 void results_search(char * from, char *to, char *date, int * n_choices,
-                    char *** choices, char *** choices_msg, int max_length, int max_rows);
+                    char *** choices, char *** choices_msg, int max_length);
 
 #endif /*NCOURSES_SEARCH_H*/
 

@@ -26,8 +26,7 @@ static const char *query_insert =
 void    results_bpass(/*@unused@*/ char * bookID,
                        int * n_choices, char *** choices,
                        char *** choices_msg,
-                       int max_length,
-                       int max_rows)
+                       int max_length)
 /**
 * @param bookID  form field bookId
 * @param n_choices fill this with the number of results
@@ -40,7 +39,7 @@ void    results_bpass(/*@unused@*/ char * bookID,
 */
 
 {
-    int i=0, j=0;
+    int i=0;
     int t=0;
     char query_result_set[1024][1024];
     int n_rows = 0;
@@ -69,6 +68,7 @@ void    results_bpass(/*@unused@*/ char * bookID,
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt_select);
     ret = SQLPrepare(stmt_select, (SQLCHAR *)query, SQL_NTS);
     if (!SQL_SUCCEEDED(ret)) {
+        odbc_extract_error("SQLPrepare", stmt_select, SQL_HANDLE_STMT);
         snprintf(query_result_set[0], sizeof(query_result_set[0]), "Error al preparar la consulta principal.");
         t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
         strncpy((*choices_msg)[0], query_result_set[0], t);
@@ -83,6 +83,7 @@ void    results_bpass(/*@unused@*/ char * bookID,
 
     ret = SQLExecute(stmt_select);
     if (!SQL_SUCCEEDED(ret)) {
+        odbc_extract_error("SQLExecute", stmt_select, SQL_HANDLE_STMT);
         snprintf(query_result_set[0], sizeof(query_result_set[0]), "Error al ejecutar la consulta principal.");
         t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
         strncpy((*choices_msg)[0], query_result_set[0], t);
@@ -100,6 +101,16 @@ void    results_bpass(/*@unused@*/ char * bookID,
 
     /* Si no hay ningun dato es porque o ya se han añadido o porque nunca faltó la tarjeta de embarque*/
     ret = SQLFetch(stmt_select);
+    if (!SQL_SUCCEEDED(ret)) {
+        odbc_extract_error("SQLExecute", stmt_select, SQL_HANDLE_STMT);
+        snprintf(query_result_set[0], sizeof(query_result_set[0]), "Book ref no válido");
+        t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
+        strncpy((*choices_msg)[0], query_result_set[0], t);
+        SQLFreeHandle(SQL_HANDLE_STMT, stmt_select);
+        odbc_disconnect(env, dbc);
+        *n_choices = 0;
+        return;
+    }
     if (ret == SQL_NO_DATA) {
         snprintf(query_result_set[0], sizeof(query_result_set[0]), "No hay resultados para los datos seleccionados.");
         t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
@@ -114,6 +125,7 @@ void    results_bpass(/*@unused@*/ char * bookID,
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt_boarding);
     ret = SQLPrepare(stmt_boarding, (SQLCHAR *)query_boarding_no, SQL_NTS);
     if (!SQL_SUCCEEDED(ret)) {
+        odbc_extract_error("SQLPrepare", stmt_boarding, SQL_HANDLE_STMT);
         snprintf(query_result_set[0], sizeof(query_result_set[0]), "Error al preparar la consulta de boarding_no.");
         t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
         strncpy((*choices_msg)[0], query_result_set[0], t);
@@ -128,6 +140,7 @@ void    results_bpass(/*@unused@*/ char * bookID,
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt_seat);
     ret = SQLPrepare(stmt_seat, (SQLCHAR *)query_seat_no, SQL_NTS);
     if (!SQL_SUCCEEDED(ret)) {
+        odbc_extract_error("SQLPrepare", stmt_seat, SQL_HANDLE_STMT);
         snprintf(query_result_set[0], sizeof(query_result_set[0]), "Error al preparar la consulta de seat_no.");
         t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
         strncpy((*choices_msg)[0], query_result_set[0], t);
@@ -143,6 +156,7 @@ void    results_bpass(/*@unused@*/ char * bookID,
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt_insert);
     ret = SQLPrepare(stmt_insert, (SQLCHAR *)query_insert, SQL_NTS);
     if (!SQL_SUCCEEDED(ret)) {
+        odbc_extract_error("SQLPrepare", stmt_insert, SQL_HANDLE_STMT);
         snprintf(query_result_set[0], sizeof(query_result_set[0]), "Error al preparar la consulta de insert.");
         t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
         strncpy((*choices_msg)[0], query_result_set[0], t);
@@ -262,18 +276,6 @@ void    results_bpass(/*@unused@*/ char * bookID,
 
     /* El numero de resultados son las filas obtenidas*/
     *n_choices = n_rows;
-
-    /* Reallocamos en caso de que el numero de resultados sea mayor 
-       al numero de filas permitidas */
-    if (*n_choices > max_rows) {
-        *choices = realloc(*choices, (*n_choices + 1) * sizeof(char *));
-        *choices_msg = realloc(*choices_msg, (*n_choices + 1) * sizeof(char *));
-
-        for (j = max_rows; j < (*n_choices + 1); j++) {
-            (*choices)[j] = malloc(max_length);
-            (*choices_msg)[j] = malloc(max_length);
-        }
-    }
 
     /* Pegamos la informacion obtenida en choices y choices_msg */
     for (i = 0; i < *n_choices; i++) {

@@ -147,7 +147,6 @@ The leaks you should worry about are the “unreachable” leaks because they in
       */
 {
     int i;
-    int limit = menus.no_items > 0 ? menus.no_items : windows.rows_out_win;
     /* free windows */
     free(windows.msg_title);
     free(windows.out_title);
@@ -186,12 +185,12 @@ The leaks you should worry about are the “unreachable” leaks because they in
     free(forms.bpass_form_items);
 
     /* Liberamos todo lo que no sea NULL*/
-    for (i = 0; i < limit; i++)
+    for (i = 0; i < 1024; i++)
         if (menus.out_win_choices[i] != NULL) free(menus.out_win_choices[i]);
     free(menus.out_win_choices);
 
     /* Liberamos el nuevo parametro */
-    for (i = 0; i < limit; i++)
+    for (i = 0; i < 1024; i++)
         if (menus.msg_win_choices[i] != NULL) free(menus.msg_win_choices[i]);
     free(menus.msg_win_choices);
 

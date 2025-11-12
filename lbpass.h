@@ -10,6 +10,6 @@
 #include <string.h>
 /*#include <unistd.h>*/
 void results_bpass(char * bookID, int * n_choices,
-                   char *** choices, char *** choices_msg, int max_length, int max_rows);
+                   char *** choices, char *** choices_msg, int max_length);
 
 #endif /*NCOURSES_BPASS_H */

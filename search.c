@@ -29,10 +29,9 @@ static const char *query_combrobacion =
 void    results_search(char * from, char *to, char *date,
                        int * n_choices, char *** choices,
                        char *** choices_msg,
-                       int max_length,
-                       int max_rows)
+                       int max_length)
 {
-    int i=0, j=0;
+    int i=0;
     int t=0;
     /* Usamos este array para copiar todos los datos obtenidos aqui primero y luego en choices y choices_msg */
     char query_result_set[1024][1024];
@@ -158,7 +157,7 @@ void    results_search(char * from, char *to, char *date,
     /* Codemos la primera fila y vemos si se han conseguido datos */
     ret = SQLFetch(stmt);
     if (!SQL_SUCCEEDED(ret)) {
-        odbc_extract_error("SQLExecute", stmt, SQL_HANDLE_STMT);
+        odbc_extract_error("SQLFetch", stmt, SQL_HANDLE_STMT);
         snprintf(query_result_set[0], sizeof(query_result_set[0]), "Fecha no válida o error en los datos proporcionados.");
         t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
         strncpy((*choices_msg)[0], query_result_set[0], t);
@@ -203,17 +202,6 @@ void    results_search(char * from, char *to, char *date,
 
     /* El numero de elecciones son las filas que hemos sacado */
     *n_choices = n_rows;
-
-    /* Si dicho numero se pasa de max_rows hacemos un realloc para poder guardar toda la informacion en choices y choices_msg */
-    if (*n_choices > max_rows) {
-        *choices = realloc(*choices, (*n_choices + 1) * sizeof(char *));
-        *choices_msg = realloc(*choices_msg, (*n_choices + 1) * sizeof(char *));
-
-        for (j = max_rows; j < (*n_choices + 1); j++) {
-            (*choices)[j] = malloc(max_length);
-            (*choices_msg)[j] = malloc(max_length);
-        }
-    }
 
     /* Copiamos el encabezado en la posicion 0 */
     t = MIN((int)strlen(query_result_set[0]) + 1, max_length);
